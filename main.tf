@@ -54,9 +54,9 @@ resource "google_compute_subnetwork" "regional" {
 # resource "google_compute_subnetwork" "public" {
 #   for_each    = { for idx, ad in local.zones : ad => idx }
 #   project     = var.project
-#   name        = "${var.cluster_name}-public-${each.value}"
+#   name        = "${var.cluster_name}-public-${each.key}"
 #   region      = var.region
-#   description = "Public subnet for zone ${each.value}"
+#   description = "Public subnet for zone ${each.key}"
 #   network     = google_compute_network.network.id
 
 #   stack_type               = "IPV4_IPV6"
@@ -68,9 +68,9 @@ resource "google_compute_subnetwork" "regional" {
 resource "google_compute_subnetwork" "private" {
   for_each    = { for idx, ad in local.zones : ad => idx }
   project     = var.project
-  name        = "${var.cluster_name}-private-${each.value}"
+  name        = "${var.cluster_name}-private-${each.key}"
   region      = var.region
-  description = "Private subnet for zone ${each.value}"
+  description = "Private subnet for zone ${each.key}"
   network     = google_compute_network.network.id
 
   stack_type               = "IPV4_IPV6"

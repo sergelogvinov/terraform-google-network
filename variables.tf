@@ -48,6 +48,7 @@ variable "network_peering" {
     # "peer-1" = {
     #   ip    = "1.2.3.4"
     #   cidrs = ["172.16.0.0/22"]
+    #   secret = "abcd1234"
     #   # BGP parameters for the dynamic peering
     #   asn      = 12345
     #   p2p      = ["169.254.131.96/31", "fd00:169:254:131::/127"]
@@ -93,10 +94,7 @@ variable "capabilities" {
   default = {
     "all" = {
       network_nat_enable  = false
-      network_dns_enable  = false
       network_peer_enable = false
-      network_peer_type   = "e2-micro"
-      network_peer_zone   = "b"
     },
   }
 }

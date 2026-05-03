@@ -208,3 +208,32 @@ resource "google_compute_firewall" "web_health_check" {
     ports    = ["80", "443"]
   }
 }
+
+# Peer
+
+resource "google_compute_firewall" "peer" {
+  for_each = { for k, v in {
+    v4 : compact([for sub in var.allowlist_admins : sub if length(split(".", sub)) > 1])
+    v6 : compact([for sub in var.allowlist_admins : sub if length(split(":", sub)) > 1])
+  } : k => v if length(v) > 0 }
+
+  project       = var.project
+  name          = "${var.cluster_name}-peer-${each.key}"
+  network       = var.network_name
+  description   = "Allow peer traffic"
+  priority      = 1500
+  direction     = "INGRESS"
+  source_ranges = each.value
+  target_tags   = ["${var.cluster_name}-peer"]
+
+  allow {
+    protocol = each.key == "v4" ? "icmp" : "58" # ipv6-icmp
+  }
+
+  allow {
+    protocol = "tcp"
+    ports    = ["22"]
+  }
+
+  depends_on = [google_compute_network.network]
+}

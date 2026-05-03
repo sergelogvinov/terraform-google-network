@@ -26,6 +26,7 @@ output "networks" {
       name    = var.network_name
       cidr_v4 = local.network_cidr_v4
       cidr_v6 = local.network_cidr_v6
+      peer_v4 = try(google_compute_address.peer[0].address, "")
     }
   }
 }
@@ -56,7 +57,7 @@ output "network_public" {
     cidr_v4    = google_compute_subnetwork.regional.ip_cidr_range
     cidr_v6    = cidrsubnet(google_compute_subnetwork.regional.external_ipv6_prefix, 0, 0)
     gateway_v4 = google_compute_subnetwork.regional.gateway_address
-    gateway_v6 = cidrhost(google_compute_subnetwork.regional.external_ipv6_prefix, 1)
+    gateway_v6 = ""
     mtu        = google_compute_network.network.mtu
     tier       = google_compute_subnetwork.regional.ipv6_access_type == "EXTERNAL" ? "PREMIUM" : "STANDARD"
   } }
@@ -72,7 +73,7 @@ output "network_private" {
     cidr_v4    = google_compute_subnetwork.private[zone].ip_cidr_range
     cidr_v6    = cidrsubnet(google_compute_subnetwork.private[zone].external_ipv6_prefix, 0, 0)
     gateway_v4 = google_compute_subnetwork.private[zone].gateway_address
-    gateway_v6 = cidrhost(google_compute_subnetwork.private[zone].external_ipv6_prefix, 1)
+    gateway_v6 = ""
     mtu        = google_compute_network.network.mtu
     tier       = google_compute_subnetwork.private[zone].ipv6_access_type == "EXTERNAL" ? "PREMIUM" : "STANDARD"
   } }
@@ -95,3 +96,23 @@ output "network_secgroup" {
     web          = "${var.network_name}-web"
   }
 }
+
+# output "network_peering" {
+#   value = { for k, v in local.ipsec_tunnels : k => {
+#     server = {
+#       asn  = v.server_asn
+#       ip4  = v.server_v4
+#       ip6  = v.server_v6
+#       p2p4 = v.server_p2p_v4
+#       p2p6 = v.server_p2p_v6 != "" ? scaleway_s2s_vpn_connection.peer[k].bgp_session_ipv6[0].private_ip : null
+#     }
+#     client = {
+#       asn  = v.peer_asn
+#       ip4  = v.peer_v4
+#       ip6  = v.peer_v6
+#       p2p4 = v.peer_p2p_v4
+#       p2p6 = v.peer_p2p_v6 != "" ? scaleway_s2s_vpn_connection.peer[k].bgp_session_ipv6[0].peer_private_ip : null
+#     }
+#     }
+#   }
+# }
