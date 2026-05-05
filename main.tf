@@ -2,6 +2,9 @@
 locals {
   zones = data.google_compute_zones.region.names
 
+  static_peering  = length([for peer, v in var.network_peering : v.asn if lookup(v, "asn", 0) != 0]) == 0 ? lookup(try(var.capabilities["all"], {}), "network_peer_enable", false) : false
+  dynamic_peering = length([for peer, v in var.network_peering : v.asn if lookup(v, "asn", 0) != 0]) > 0 ? lookup(try(var.capabilities["all"], {}), "network_peer_enable", false) : false
+
   network_cidr_v4 = cidrsubnet(try(one([for ip in var.network_cidr : ip if length(split(".", ip)) > 1]), ""), 4, var.network_shift)
   network_cidr_v6 = cidrsubnet(try(one([for ip in var.network_cidr : ip if length(split(":", ip)) > 1]), ""), 8, var.network_shift * 8)
 }
@@ -23,6 +26,14 @@ resource "google_compute_router" "main" {
   project = var.project
   region  = var.region
   network = google_compute_network.network.name
+
+  dynamic "bgp" {
+    for_each = local.dynamic_peering ? [1] : []
+    content {
+      asn            = var.bgp_asn
+      advertise_mode = "DEFAULT"
+    }
+  }
 }
 
 resource "google_compute_subnetwork" "regional_lb" {

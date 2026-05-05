@@ -26,7 +26,7 @@ output "networks" {
       name    = var.network_name
       cidr_v4 = local.network_cidr_v4
       cidr_v6 = local.network_cidr_v6
-      peer_v4 = try(google_compute_address.peer[0].address, "")
+      peer    = compact(flatten([try(google_compute_address.peer[0].address, null), [for iface, vpn in try(google_compute_ha_vpn_gateway.peer[0].vpn_interfaces, {}) : vpn.ip_address]]))
     }
   }
 }
@@ -97,22 +97,30 @@ output "network_secgroup" {
   }
 }
 
-# output "network_peering" {
-#   value = { for k, v in local.ipsec_tunnels : k => {
-#     server = {
-#       asn  = v.server_asn
-#       ip4  = v.server_v4
-#       ip6  = v.server_v6
-#       p2p4 = v.server_p2p_v4
-#       p2p6 = v.server_p2p_v6 != "" ? scaleway_s2s_vpn_connection.peer[k].bgp_session_ipv6[0].private_ip : null
-#     }
-#     client = {
-#       asn  = v.peer_asn
-#       ip4  = v.peer_v4
-#       ip6  = v.peer_v6
-#       p2p4 = v.peer_p2p_v4
-#       p2p6 = v.peer_p2p_v6 != "" ? scaleway_s2s_vpn_connection.peer[k].bgp_session_ipv6[0].peer_private_ip : null
-#     }
-#     }
-#   }
-# }
+output "network_peering" {
+  value = local.dynamic_peering ? { for k in flatten([
+    for name, v in local.ipsec_tunnels_ha : {
+      name : name
+      server : {
+        asn : var.bgp_asn
+        ip : v.server_v4 != "" ? v.server_v4 : v.server_v6
+        p2p4 : v.server_p2p_v4
+        p2p6 : v.server_p2p_v6
+      }
+      client : {
+        asn : v.peer_asn
+        ip : v.peer_v4 != "" ? v.peer_v4 : v.peer_v6
+        p2p4 : v.peer_p2p_v4
+        p2p6 : v.peer_p2p_v6
+      }
+    }]) : k.name => k } : { for k in flatten([
+    for name, v in local.ipsec_tunnels : {
+      name : name
+      server : {
+        ip : v.server_v4 != "" ? v.server_v4 : v.server_v6
+      }
+      client : {
+        ip : v.peer_v4 != "" ? v.peer_v4 : v.peer_v6
+      }
+  }]) : k.name => k }
+}

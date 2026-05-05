@@ -46,9 +46,9 @@ variable "network_peering" {
   type = map(any)
   default = {
     # "peer-1" = {
-    #   ip    = "1.2.3.4"
+    #   ip    = ["1.2.3.4"]
     #   cidrs = ["172.16.0.0/22"]
-    #   secret = "abcd1234"
+    #   secret = "abcdef123456"
     #   # BGP parameters for the dynamic peering
     #   asn      = 12345
     #   p2p      = ["169.254.131.96/31", "fd00:169:254:131::/127"]
@@ -103,4 +103,20 @@ variable "tags" {
   description = "Defined Tags of resources"
   type        = list(string)
   default     = []
+}
+
+variable "bgp_asn" {
+  description = "Google BGP ASN for dynamic peering"
+  type        = number
+  default     = 64512
+}
+
+variable "bgp_stack" {
+  description = "Google BGP stack IPv4/IPv6/IPV4_IPV6 for dynamic peering"
+  type        = string
+  default     = "IPV4_IPV6"
+  validation {
+    condition     = contains(["IPV4_ONLY", "IPV6_ONLY", "IPV4_IPV6"], var.bgp_stack)
+    error_message = "The bgp_stack must be one of IPV4_ONLY, IPV6_ONLY, IPV4_IPV6."
+  }
 }
