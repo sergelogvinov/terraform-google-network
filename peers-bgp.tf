@@ -21,17 +21,17 @@ locals {
           secret  = v.secret
           subnets = v.cidrs
 
-          server_asn  = var.bgp_asn
-          server_v4   = vpn.ip_address
-          server_v6   = ""
-          peer_p2p_v4 = local.ipsec_tunnels_p2p[peer].v4 != null ? cidrhost(cidrsubnet(local.ipsec_tunnels_p2p[peer].v4, 3, i), 2 * iface + 1 - v.p2p_side) : ""
-          peer_p2p_v6 = local.ipsec_tunnels_p2p[peer].v6 != null ? cidrhost(cidrsubnet(local.ipsec_tunnels_p2p[peer].v6, 3, i), 4 * iface + 1 - v.p2p_side) : ""
-
-          peer_asn      = v.asn
-          peer_v4       = length(split(".", ip)) > 1 ? ip : ""
-          peer_v6       = length(split(":", ip)) > 1 ? ip : ""
+          server_asn    = var.bgp_asn
+          server_v4     = vpn.ip_address
+          server_v6     = ""
           server_p2p_v4 = local.ipsec_tunnels_p2p[peer].v4 != null ? cidrhost(cidrsubnet(local.ipsec_tunnels_p2p[peer].v4, 3, i), 2 * iface + v.p2p_side) : ""
           server_p2p_v6 = local.ipsec_tunnels_p2p[peer].v6 != null ? cidrhost(cidrsubnet(local.ipsec_tunnels_p2p[peer].v6, 3, i), 4 * iface + v.p2p_side) : ""
+
+          peer_asn    = v.asn
+          peer_v4     = length(split(".", ip)) > 1 ? ip : ""
+          peer_v6     = length(split(":", ip)) > 1 ? ip : ""
+          peer_p2p_v4 = local.ipsec_tunnels_p2p[peer].v4 != null ? cidrhost(cidrsubnet(local.ipsec_tunnels_p2p[peer].v4, 3, i), 2 * iface + 1 - v.p2p_side) : ""
+          peer_p2p_v6 = local.ipsec_tunnels_p2p[peer].v6 != null ? cidrhost(cidrsubnet(local.ipsec_tunnels_p2p[peer].v6, 3, i), 4 * iface + 1 - v.p2p_side) : ""
         } if iface == i
       ]
     ] if length(lookup(v, "ip", [])) > 0 && local.dynamic_peering]
@@ -93,7 +93,7 @@ resource "google_compute_vpn_tunnel" "hapeer" {
       encryption = ["AES-GCM-16-256", "AES-GCM-16-128"]
       integrity  = []
       prf        = ["PRF-HMAC-SHA2-256", "PRF-HMAC-SHA2-512"]
-      dh         = ["Group-31", "Group-19"]
+      dh         = ["Group-31", "Group-19", "Group-16", "Group-14"]
     }
     phase2 {
       encryption = ["AES-GCM-16-256", "AES-GCM-16-128"]
