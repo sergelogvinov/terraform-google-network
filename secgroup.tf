@@ -237,3 +237,22 @@ resource "google_compute_firewall" "peer" {
 
   depends_on = [google_compute_network.network]
 }
+
+resource "google_compute_firewall" "peer_controlplane" {
+  for_each      = toset(var.network_cidr)
+  project       = var.project
+  name          = "${var.cluster_name}-peer-lb-v${length(split(".", each.value)) > 1 ? "4" : "6"}"
+  network       = var.network_name
+  description   = "Managed by terraform: Allow peer traffic to controlplane"
+  priority      = 1600
+  direction     = "INGRESS"
+  source_ranges = [each.value]
+  target_tags   = ["${var.cluster_name}-peer"]
+
+  allow {
+    protocol = "tcp"
+    ports    = ["2379", "2380", "6443", "50000", "50001"]
+  }
+
+  depends_on = [google_compute_network.network]
+}

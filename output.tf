@@ -23,10 +23,17 @@ output "networks" {
   description = "Regional networks"
   value = {
     "${var.region}" = {
-      name    = var.network_name
-      cidr_v4 = local.network_cidr_v4
-      cidr_v6 = local.network_cidr_v6
-      peer    = compact(flatten([try(google_compute_address.peer[0].address, null), [for iface, vpn in try(google_compute_ha_vpn_gateway.peer[0].vpn_interfaces, {}) : vpn.ip_address]]))
+      name     = var.network_name
+      cidr_v4  = local.network_cidr_v4
+      cidr_v6  = local.network_cidr_v6
+      peer     = compact(flatten([try(google_compute_address.peer[0].address, null), [for iface, vpn in try(google_compute_ha_vpn_gateway.peer[0].vpn_interfaces, {}) : vpn.ip_address]]))
+      peer_mtu = 1420
+    }
+    "ALL" : {
+      cidr_v4    = local.network_cidr_v4
+      cidr_v6    = local.network_cidr_v6
+      network_v4 = one([for ip in var.network_cidr : ip if length(split(".", ip)) > 1])
+      network_v6 = one([for ip in var.network_cidr : ip if length(split(":", ip)) > 1])
     }
   }
 }
